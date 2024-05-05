@@ -21,7 +21,7 @@ class InitialProjector(nn.Module):
             else:
                 projection = projection.cpu()
             self.proj_embeds = nn.Parameter(projection)
-            t.cuda.empty_cache()
+
             return
         if args.proj_method == 'uniform':
             self.proj_embeds = nn.Parameter(self.uniform_proj(adj))
@@ -35,7 +35,7 @@ class InitialProjector(nn.Module):
             self.proj_embeds = nn.Parameter(self.id_proj(adj))
         else:
             raise Exception('Unrecognized Initial Embedding')
-        t.cuda.empty_cache()
+
     
     def uniform_proj(self, adj):
         node_num = adj.shape[0] if adj.shape[0] == adj.shape[1] else adj.shape[0] + adj.shape[1]
@@ -290,7 +290,7 @@ class OpenGraph(nn.Module):
     def cal_loss_node(self, batch_data, adj, initial_projector):
         ancs, labels = batch_data
         poss = labels + adj.shape[0] - args.class_num
-        negs = t.from_numpy(np.array(list(range(args.class_num)))).to(t.int64).cuda() + adj.shape[0] - args.class_num
+        negs = t.from_numpy(np.array(list(range(args.class_num)))).to(t.int64) + adj.shape[0] - args.class_num
         with t.no_grad():
             masked_adj = self.masker(adj, (ancs.to(args.devices[0]), (poss.to(args.devices[0]))))
             initial_embeds = initial_projector()

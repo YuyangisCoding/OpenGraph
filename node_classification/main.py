@@ -86,7 +86,7 @@ class Exp:
 
     def prepare_model(self):
         self.model = OpenGraph()#.to(args.devices[1])#.cuda()
-        t.cuda.empty_cache()
+
         self.opt = t.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=0)
         self.lr_scheduler = ALRS(self.opt)
         self.print_model_size()
@@ -119,7 +119,7 @@ class Exp:
         ret = dict()
         ret['Acc'] = ep_acc / ep_tot
         ret['F1'] = f1_score(all_labels.cpu().numpy(), all_preds.cpu().numpy(), average='macro')
-        t.cuda.empty_cache()
+
         return ret
     
     def calc_recall_ndcg(self, topLocs, tstLocs, batIds):
@@ -154,7 +154,7 @@ class Exp:
         log('Model Saved: %s' % args.save_path)
 
     def load_model(self):
-        ckp = t.load('../Models/' + args.load_model + '.mod')
+        ckp = t.load('../Models/' + args.load_model + '.mod',map_location=t.device('cpu'))
         self.model = ckp['model'].to(args.devices[1])
         self.opt = t.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=0)
 
@@ -163,11 +163,8 @@ class Exp:
         log('Model Loaded')
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    if len(args.gpu.split(',')) > 1:
-        args.devices = ['cuda:0', 'cuda:1']
-    else:
-        args.devices = ['cuda:0', 'cuda:0']
+
+    args.devices = ['cpu', 'cpu']
     args.devices = list(map(lambda x: t.device(x), args.devices))
     logger.saveDefault = True
     setproctitle.setproctitle('OpenGraph')
