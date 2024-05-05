@@ -98,7 +98,7 @@ class Exp:
 
     def prepare_model(self):
         self.model = OpenGraph()
-        t.cuda.empty_cache()
+
         self.opt = t.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=0)
         self.lr_scheduler = ALRS(self.opt)
         self.print_model_size()
@@ -150,7 +150,7 @@ class Exp:
         ret['Loss'] = ep_loss / tot_samp_num
         ret['preLoss'] = ep_preloss / tot_samp_num
         ret['regLoss'] = ep_regloss / steps
-        t.cuda.empty_cache()
+
         self.lr_scheduler.step(ret['Loss'])
         return ret
     
@@ -166,7 +166,7 @@ class Exp:
                 usrs = usrs.long().to(args.devices[1])
                 trn_masks = tst_loader.dataset.csrmat[numpy_usrs].tocoo()
                 cand_size = trn_masks.shape[1]
-                trn_masks = t.from_numpy(np.stack([trn_masks.row, trn_masks.col], axis=0)).long().cuda()
+                trn_masks = t.from_numpy(np.stack([trn_masks.row, trn_masks.col], axis=0)).long()
                 adj = tst_handler.torch_adj
                 if args.cache_adj == 0:
                     adj = adj.to(args.devices[0])
@@ -184,7 +184,7 @@ class Exp:
         ret = dict()
         ret['Recall'] = ep_recall / ep_tstnum
         ret['NDCG'] = ep_ndcg / ep_tstnum
-        t.cuda.empty_cache()
+
         return ret
     
     def calc_recall_ndcg(self, topLocs, tstLocs, batIds):
@@ -228,11 +228,9 @@ class Exp:
         log('Model Loaded')
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    if len(args.gpu.split(',')) > 1:
-        args.devices = ['cuda:0', 'cuda:1']
-    else:
-        args.devices = ['cuda:0', 'cuda:0']
+
+    args.devices = ['cpu','cpu']
+
     args.devices = list(map(lambda x: t.device(x), args.devices))
     logger.saveDefault = True
     setproctitle.setproctitle('OpenGraph')

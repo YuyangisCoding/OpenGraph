@@ -21,7 +21,7 @@ class InitialProjector(nn.Module):
             else:
                 projection = projection.cpu()
             self.proj_embeds = nn.Parameter(projection)
-            t.cuda.empty_cache()
+
             return
         if args.proj_method == 'uniform':
             self.proj_embeds = nn.Parameter(self.uniform_proj(adj))
@@ -35,7 +35,7 @@ class InitialProjector(nn.Module):
             self.proj_embeds = nn.Parameter(self.id_proj(adj))
         else:
             raise Exception('Unrecognized Initial Embedding')    
-        t.cuda.empty_cache()
+
     
     def uniform_proj(self, adj):
         node_num = adj.shape[0] if adj.shape[0] == adj.shape[1] else adj.shape[0] + adj.shape[1]
@@ -193,7 +193,7 @@ class Masker(nn.Module):
             cols = masked_hashvals % node_num
             rows = t.div((masked_hashvals - cols).long(), node_num, rounding_mode='trunc').long()
 
-            adj = t.sparse.FloatTensor(t.stack([rows, cols], dim=0), t.ones_like(rows, dtype=t.float32).to(args.devices[0]), adj.shape)
+            adj = t.sparse_coo_tensor(t.stack([rows, cols], dim=0), t.ones_like(rows, dtype=t.float32).to(args.devices[0]), adj.shape)
             return self._normalize_adj(adj)
         elif args.mask_method == 'random':
             return self._random_mask_edge(adj)
@@ -222,7 +222,7 @@ class Masker(nn.Module):
         mask = ((t.rand(edgeNum) + 1.0 - args.random_mask_rate).floor()).type(t.bool)
         newIdxs = idxs[:, mask]
         newVals = t.ones(newIdxs.shape[1]).to(args.devices[0]).float()
-        return self._normalize_adj(t.sparse.FloatTensor(newIdxs, newVals, adj.shape))
+        return self._normalize_adj(t.sparse_coo_tensor(newIdxs, newVals, adj.shape))
     
     def _normalize_adj(self, adj):
         row_degree = t.pow(t.sparse.sum(adj, dim=1).to_dense(), 0.5)
@@ -230,7 +230,7 @@ class Masker(nn.Module):
         newRows, newCols = adj._indices()[0, :], adj._indices()[1, :]
         rowNorm, colNorm = row_degree[newRows], col_degree[newCols]
         newVals = adj._values() / rowNorm / colNorm
-        return t.sparse.FloatTensor(adj._indices(), newVals, adj.shape)
+        return t.sparse_coo_tensor(adj._indices(), newVals, adj.shape)
 
 class OpenGraph(nn.Module):
     def __init__(self):
@@ -291,7 +291,7 @@ class OpenGraph(nn.Module):
         anc_embeds = final_embeds[ancs]
         cand_embeds = final_embeds[-cand_size:]
 
-        mask_mat = t.sparse.FloatTensor(trn_mask, t.ones(trn_mask.shape[1]).cuda(), t.Size([ancs.shape[0], cand_size]))
+        mask_mat = t.sparse_coo_tensor(trn_mask, t.ones(trn_mask.shape[1]), t.Size([ancs.shape[0], cand_size]))
         dense_mat = mask_mat.to_dense()
 
         all_preds = anc_embeds @ cand_embeds.T * (1 - dense_mat) - dense_mat * 1e8
