@@ -1,4 +1,5 @@
 import torch as t
+import torch.cuda
 from torch import nn
 import Utils.TimeLogger as logger
 from Utils.TimeLogger import log
@@ -228,9 +229,10 @@ class Exp:
         log('Model Loaded')
 
 if __name__ == '__main__':
-
-    args.devices = ['cpu','cpu']
-
+    if torch.cuda.is_available():
+        args.devices = ['cuda:0','cuda:0']
+    else:
+        args.devices = ['cpu', 'cpu']
     args.devices = list(map(lambda x: t.device(x), args.devices))
     logger.saveDefault = True
     setproctitle.setproctitle('OpenGraph')
