@@ -1,5 +1,6 @@
-import datetime
+import sys
 
+import datetime
 logmsg = ''
 timemark = dict()
 saveDefault = False
@@ -17,6 +18,7 @@ def log(msg, save=None, oneline=False):
 		print(tem, end='\r')
 	else:
 		print(tem)
+	sys.stdout.flush()
 
 def marktime(marker):
 	global timemark

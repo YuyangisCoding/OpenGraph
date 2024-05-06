@@ -236,19 +236,23 @@ if __name__ == '__main__':
     setproctitle.setproctitle('OpenGraph')
 
     log('Start')
-    trn_datasets = ['gen1']
-    tst_datasets = ['ml1m', 'ml10m', 'collab']
+    #todo train on all dataset
+    trn_datasets = ['gen1', 'amazon-book', 'collab', 'ddi', 'gen0', 'gen2', 'ml1m', 'ml10m']
+    tst_datasets = []
+    #todo end
+    if len(trn_datasets) != 0:
+        args.trndata = trn_datasets
+    if len(tst_datasets) != 0:
+        args.tstdata = tst_datasets
+    settings = 'Current settings:\n'
+    for key, value in vars(args).items():
+        settings+=f'[{key}: {value}];   '
+    log(settings)
 
-    # trn_datasets = ['gen2']
-    # tst_datasets = ['ddi']
-
-    # trn_datasets = ['gen0']
-    # tst_datasets = ['amazon-book']
-
-    if len(args.tstdata) != 0:
-        tst_datasets = [args.tstdata]
-    if len(args.trndata) != 0:
-        trn_datasets = [args.trndata]
+    # if len(args.tstdata) != 0:
+    #     tst_datasets = [args.tstdata]
+    # if len(args.trndata) != 0:
+    #     trn_datasets = [args.trndata]
     trn_datasets = list(set(trn_datasets))
     tst_datasets = list(set(tst_datasets))
     multi_handler = MultiDataHandler(trn_datasets, tst_datasets)
