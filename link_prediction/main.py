@@ -245,11 +245,11 @@ if __name__ == '__main__':
     if len(trn_datasets) != 0:
         args.trndata = trn_datasets
     else:
-        trn_datasets = [args.trndata]
+        trn_datasets = [args.trndata] if len(args.trndata) != 0 else []
     if len(tst_datasets) != 0:
         args.tstdata = tst_datasets
     else:
-        tst_datasets = [args.tstdata]
+        tst_datasets = [args.tstdata] if len(args.tstdata) != 0 else []
     settings = 'Current settings:\n'
     for key, value in vars(args).items():
         settings+=f'[{key}: {value}];   '
