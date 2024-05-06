@@ -239,22 +239,22 @@ if __name__ == '__main__':
 
     log('Start')
     #todo train on all dataset
-    trn_datasets = ['gen1', 'amazon-book', 'collab', 'ddi', 'gen0', 'gen2', 'ml1m', 'ml10m']
+    trn_datasets = []
     tst_datasets = []
     #todo end
     if len(trn_datasets) != 0:
         args.trndata = trn_datasets
+    else:
+        trn_datasets = [args.trndata]
     if len(tst_datasets) != 0:
         args.tstdata = tst_datasets
+    else:
+        tst_datasets = [args.tstdata]
     settings = 'Current settings:\n'
     for key, value in vars(args).items():
         settings+=f'[{key}: {value}];   '
     log(settings)
 
-    # if len(args.tstdata) != 0:
-    #     tst_datasets = [args.tstdata]
-    # if len(args.trndata) != 0:
-    #     trn_datasets = [args.trndata]
     trn_datasets = list(set(trn_datasets))
     tst_datasets = list(set(tst_datasets))
     multi_handler = MultiDataHandler(trn_datasets, tst_datasets)
