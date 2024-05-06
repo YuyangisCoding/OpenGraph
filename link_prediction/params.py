@@ -3,7 +3,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Model Parameters')
     parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
-    parser.add_argument('--batch', default=10240, type=int, help='training batch size')
+    parser.add_argument('--batch', default=20480, type=int, help='training batch size')
     parser.add_argument('--tst_batch', default=256, type=int, help='testing batch size (number of users)')
     parser.add_argument('--epoch', default=100, type=int, help='number of epochs')
     parser.add_argument('--save_path', default='tem', help='file name to save model and training record')
