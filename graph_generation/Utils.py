@@ -1,5 +1,7 @@
 import time
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key="xx-xxxxxx")
 import json
 import tiktoken
 import numpy as np
@@ -8,20 +10,17 @@ from Exp_Utils.TimeLogger import log
 from Exp_Utils.Emailer import SendMail
 import time
 
-openai.api_key = "xx-xxxxxx"
 
 class DataGenAgent:
     def __init__(self):
         super(DataGenAgent, self).__init__()
         self.token_num = 0
         self.encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
-    
+
     def openai_embedding(self, message):
         try:
-            embedding = openai.Embedding.create(
-                model='text-embedding-ada-002',
-                input = message
-            )['data'][0]['embedding']
+            embedding = client.embeddings.create(model='text-embedding-ada-002',
+            input = message)['data'][0]['embedding']
             # time.sleep()
             return np.array(embedding)
         except Exception as e:
@@ -31,13 +30,11 @@ class DataGenAgent:
 
     def openai(self, message):
         try:
-            completion = openai.ChatCompletion.create(
-                model='gpt-3.5-turbo-1106',
-                # model='gpt-4',
-                messages=[
-                    {"role": "user", "content": message},
-                ]
-            )
+            completion = client.chat.completions.create(model='gpt-3.5-turbo-1106',
+            # model='gpt-4',
+            messages=[
+                {"role": "user", "content": message},
+            ])
             response = completion.choices[0].message.content
             time.sleep(1)
             self.token_num += len(self.encoding.encode(json.dumps(message)))
@@ -46,7 +43,7 @@ class DataGenAgent:
             print('OpenAI request error: {err_msg}. Retry in 10 seconds.'.format(err_msg=e))
             time.sleep(10)
             return self.openai(message)
-    
+
     def handling_llm_exceptions(self, message, interpret_func, interpret_args, failure_tolerance):
         try:
             answers_text = self.openai(message)
@@ -82,21 +79,21 @@ class EntityTreeNode:
         self.children = dict()
         self.parent = parent
         self.depth = depth
-    
+
     def is_child(self, entity_name):
         return entity_name in self.children
-    
+
     def to_child(self, entity_name):
         return self.children[entity_name]
 
     def add_child(self, entity_name):
         child = EntityTreeNode(entity_name, self.depth+1, self)
         self.children[entity_name] = child
-    
+
     def iterate_children(self):
         for key, node in self.children.items():
             yield key, node
-    
+
     def allocate_number(self, quantity):
         print('Allocating depth {depth} {entity_name}, quantity: {quantity}'.format(depth=self.depth, entity_name=self.entity_name, quantity=quantity))
         self.quantity = quantity
@@ -112,7 +109,7 @@ class EntityTreeNode:
         child_num = np.mean(child_freq, axis=1) * self.quantity # N
         for i, child in enumerate(child_list):
             child.allocate_number(child_num[i])
-    
+
     def get_list_of_leaves(self, entity_name, with_branches=False):
         if len(self.children) == 0:
             num = max(1, int(self.quantity))
@@ -138,12 +135,12 @@ class EntityTreeNode:
 class EntityTreeConstructer:
     def __init__(self, entity_lines):
         super(EntityTreeConstructer, self).__init__()
-        
+
         root_name = self.line_process(entity_lines[0])[0]
         self.root = EntityTreeNode(root_name, depth=1)
         self.root.frequency.append(1.0)
         self.construct_tree(entity_lines)
-    
+
     def add_node(self, cur_node, descriptions, cur):
         parent_entity_name = descriptions[cur-1]
         if cur_node.entity_name != parent_entity_name:
@@ -155,7 +152,7 @@ class EntityTreeConstructer:
             cur_node.add_child(cur_entity_name)
         if cur + 1 < len(descriptions):
             self.add_node(cur_node.to_child(cur_entity_name), descriptions, cur+1)
-    
+
     def line_process(self, entity_line, check=False):
         entity_line = entity_line.strip()
         descriptions = list(map(lambda x: x.strip(), entity_line.split(',')))
@@ -166,7 +163,7 @@ class EntityTreeConstructer:
         if len(descriptions) <= 1:
             raise Exception('Fail to split')
         return descriptions
-    
+
     def construct_tree(self, entity_lines):
         for entity_line in entity_lines:
             try:

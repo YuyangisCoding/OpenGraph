@@ -1,12 +1,13 @@
 # from langchain.prompts import PromptTemplate
 # from langchain.llms import OpenAI
 import os
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key="xxxxxx")
 import time
 import tiktoken
 import json
 
-openai.api_key = "xxxxxx"
 class DataGenAgent:
     def __init__(self, initial_entity, scenario_desc, depth):
         super(DataGenAgent, self).__init__()
@@ -21,12 +22,10 @@ class DataGenAgent:
 
     def openai(self, message):
         try:
-            completion = openai.ChatCompletion.create(
-                model='gpt-3.5-turbo-1106',
-                messages=[
-                    {"role": "user", "content": message},
-                ]
-            )
+            completion = client.chat.completions.create(model='gpt-3.5-turbo-1106',
+            messages=[
+                {"role": "user", "content": message},
+            ])
             response = completion.choices[0].message.content
             time.sleep(1)
             self.token_num += len(self.encoding.encode(json.dumps(message)))
@@ -45,7 +44,7 @@ class DataGenAgent:
             print('Concrete Check True')
             return True
         return False
-    
+
     def category_enum(self, prefix, entity_name):
         if prefix == '':
             text = 'List all distinct sub-categories of {entity_name} in the context of {scenario_desc}, ensuring a finer level of granularity. The sub-categories should not overlap with each other. And a sub-category should be a smaller subset of {entity_name}. Directly present the list EXACTLY following the form: "sub-category a, sub-category b, sub-category c, ..." without other words, format symbols, new lines, serial numbers.'.format(entity_name=entity_name, prefix=prefix, scenario_desc=self.scenario_desc)
@@ -80,7 +79,7 @@ class DataGenAgent:
                 for node in concrete_entities:
                     fs.write(node + '\n')
         return concrete_entities
-    
+
     def run(self):
         return self.decompose_category([self.initial_entity], 1)
 
